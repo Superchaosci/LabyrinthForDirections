@@ -1,126 +1,95 @@
-#include <stdio.h>
-#include <string.h>
-#include<stdio.h> 
-#include<stdlib.h>
-typedef struct LinkList {
-	char string[100];
-	int coefficient;
-	struct LinkList *next;
-}
-LinkList;
-LinkList *ini() {
-	LinkList *head;
-	head = (LinkList*)malloc(sizeof(LinkList));
-	head -> next = NULL;
-	return head;
-}
-void InsList(LinkList *head,int coeff,char str[100]) {
-	LinkList *p,*s;
-	p=head;
-	while(p->next!=NULL) {
-		p=p->next;
-	}
-	if(p!=NULL) {
-		s=(LinkList *)malloc(sizeof(LinkList));
-		strcpy(s->string,str);
-		s->coefficient=coeff;
-		p->next=s;
-		s->next=NULL;
-	}
-}
-void DisList(LinkList *head) {
-	LinkList *p;
-	p=head->next;
-	int flag=0;
-	while(p!=NULL) {
-		if((p->coefficient)>0&&flag==1){
-			printf("+");
-		}
-		flag=1;
-		printf("%d",p->coefficient);
-		if(p->string[0]!='*'){
-			printf("*");
-		} 
-		printf("%s",p->string);
-		p=p->next;
-	}
-}
-int split_short(char string[1000], int *coefficient, char *unknown) {
-	int length = strlen(string);
-	int flag = -1;
-	for (int i = 0; i < length; i++) {
-		if (string[i] == '*') {
-			flag = i;
-			break;
-		}
-	}
-	if (flag == -1) {
-		*coefficient = atoi(string);
-		unknown[0] = '\0';
-	} else {
-		char temp[1000] = {'\0'};
-		strncpy(temp, string, flag);
-		*coefficient = atoi(temp);
-		strncpy(unknown, string + flag + 1, length - flag - 1);
-	}
-	return 0;
-}
-int split_long(const char *input_string, int *coefficients, char unknowns[][100]) {
-	int num_terms = strlen(input_string);
-	int term_length = 0;
-	int index1 = 0;
-	int index2 = 0;
-	int start = 0;
-	for (index1 = 0; index1 < num_terms; index1++) {
-		if (input_string[index1] == '+' || input_string[index1] == '-') {
-			char temp[1000] = {'\0'};
-			strncpy(temp, input_string + start, index1 - start);
-			start = index1;
-			split_short(temp, &coefficients[term_length], unknowns[term_length]);
-			term_length++;
-		}
-	}
+#include<stdio.h>
+#define max 100
+struct stack{
+    int I[max];
+    int J[max];
+    int flag;
+}; 
 
-	char temp[1000] = {
-		'\0'
-	}
-	;
-	strncpy(temp, input_string + start, num_terms - start);
-	split_short(temp, &coefficients[term_length], unknowns[term_length]);
-	term_length++;
-	return term_length;
+void init(struct stack* p){
+    p->flag=1;
+    p->I[p->flag]=1;
+    p->J[p->flag]=1;
 }
-int IntoList(LinkList* Head, char* str,int coeff) {
-	LinkList* p = Head->next;
-	while (p != NULL) {
-		if (strcmp(p->string, str) == 0) {
-			p->coefficient= p->coefficient+coeff;
-			return 1;
-		}
-		p = p->next;
-	}
-	InsList(Head,coeff,str);
-	return 0;
+
+void push(int i,int j,struct stack* p){
+    p->I[++p->flag] = i;
+    p->J[p->flag] = j;
 }
-int main() {
-	char input_string[1000] = {'\0'};
-	char input_string2[1000] = {'\0'};
-	int coefficients[100] = {'\0'};
-	int coefficients2[100] = {'\0'};
-	char unknowns[100][100] = {'\0'};
-	char unknowns2[100][100] = {'\0'};
-	LinkList* Head=ini();
-	fgets(input_string, sizeof(input_string), stdin);
-	input_string[strcspn(input_string, "\n")] = '\0';
-	int num_terms = split_long(input_string, coefficients, unknowns);
-	for (int i = 0; i < num_terms; i++) {
-		IntoList(Head,unknowns[i],coefficients[i]);
-	}
-	fgets(input_string2, sizeof(input_string2), stdin);
-	input_string2[strcspn(input_string2, "\n")] = '\0';
-	num_terms = split_long(input_string2, coefficients2, unknowns2);
-	for (int i = 0; i < num_terms; i++) {
-		IntoList(Head,unknowns2[i],coefficients2[i]);
-	}
-	DisList(Head);
+
+int main(){
+    int mg[max][max],i,j,n,m;
+	int result[max][max];
+    printf("请依次输入迷宫的长和宽：\n");
+    scanf("%d%d",&n,&m);
+    printf("请输入迷宫，出口为2，墙为1:\n");
+    for(i=0;i<=n+1;i++){
+        for(j=0;j<=m+1;j++){
+            scanf("%d",&mg[i][j]);
+			 result[i][j]=mg[i][j];
+        }
+    }
+
+    struct stack search;
+    struct stack *p;
+    p=&search;
+    init(p);
+    int m1[4]={1,0,-1,0};
+    int m2[4]={0,1,0,-1};
+    i=j=1;
+    while(mg[i][j]!=2){
+        int fg=0,lim=0;
+        for(int r=0;r<4;r++){
+            if((mg[i+m1[r]][j+m2[r]]==0||mg[i+m1[r]][j+m2[r]]==2)){
+                fg++;//判断是否存在拐点 
+            }
+        }
+        for(int r=0;r<4;r++){
+            if((mg[i+m1[r]][j+m2[r]]==0||mg[i+m1[r]][j+m2[r]]==2)){
+                if(lim==0){//进行入栈操作 
+                    if(mg[i+m1[r]][j+m2[r]]!=2){
+                        mg[i+m1[r]][j+m2[r]]=1;
+                    }
+                    i=i+m1[r];
+                    j=j+m2[r];
+                    push(i,j,p);
+                    lim++;//限制一次只能走一边 
+                } 
+            }
+        }
+        if(lim>1){//多分路口，标记一下 
+            p->flag++;
+            p->I[p->flag]=10;//10>8用来作为拐角标志
+            p->J[p->flag]=10;
+        }
+        if(lim==0){//无路可走 
+            while(p->I[p->flag]!=10){
+                p->flag--;
+            } 
+            p->flag--;
+            p->flag--;
+        } 
+    }
+    printf("\n\n路线如下：\n");
+    while(p->flag>=1) {
+        if(p->I[p->flag]!=10){
+            printf("(%d,%d) ",p->I[p->flag],p->J[p->flag]);
+            result[p->I[p->flag]][p->J[p->flag]]=3;
+        }
+        p->flag--;
+    }
+    printf("\n\n转换为图形：\n");
+    for(i=0;i<=n+1;i++){
+        for(j=0;j<=m+1;j++){
+        	if(result[i][j]==3){
+        		printf("\033[32m■ \033[0m");
+			}else{
+				printf("□ "); 	
+			}
+            
+        }
+        printf("\n");
+    }
+    
+    return 0;
 }
